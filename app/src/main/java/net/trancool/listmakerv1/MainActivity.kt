@@ -1,6 +1,7 @@
 package net.trancool.listmakerv1
 
 import MainViewModel
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -13,6 +14,7 @@ import androidx.preference.PreferenceManager
 import net.trancool.listmakerv1.databinding.ActivityMainBinding
 import net.trancool.listmakerv1.models.TaskList
 import net.trancool.listmakerv1.ui.detail.ListDetailActivity
+import net.trancool.listmakerv1.ui.main.ListSelectionRecyclerViewAdapter
 import net.trancool.listmakerv1.ui.main.MainFragment
 import net.trancool.listmakerv1.ui.main.MainViewModelFactory
 
@@ -69,18 +71,40 @@ class MainActivity : AppCompatActivity(), MainFragment.MainFragmentInteractionLi
         builder.create().show()
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // 1
+        if (requestCode == LIST_DETAIL_REQUEST_CODE && resultCode ==
+            Activity.RESULT_OK) {
+// 2
+            data?.let {
+                // 3
+               viewModel.updateList(data.getParcelableExtra(INTENT_LIST_KEY)!!)
+                viewModel.refreshLists()
+            }
+        } }
+
+//    private fun updateLists() {
+//        val lists = listDataManager.readLists()
+//        listsRecyclerView.adapter =
+//            ListSelectionRecyclerViewAdapter(lists, this)
+//    }
+
 //    Creating an intent
     private fun showListDetail(list: TaskList){
 //    Create an Intent Object using MainActivity context(this), and the class name of the activity we want to move to
         val listDetailIntent = Intent(this, ListDetailActivity::class.java)
 //    provide Extras as keys with associated values you can provide to Intents
         listDetailIntent.putExtra(INTENT_LIST_KEY, list)// pass key and data  to the intent
-    startActivity(listDetailIntent)// start the targeted activity
+        startActivityForResult(listDetailIntent, LIST_DETAIL_REQUEST_CODE)// start the targeted activity
     }
 
     companion object {
         const val INTENT_LIST_KEY = "list"
+        const val LIST_DETAIL_REQUEST_CODE = 123
     }
+
 
     override fun listItemTapped(list: TaskList) {
 //        TODO("Not yet implemented")

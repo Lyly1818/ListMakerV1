@@ -29,4 +29,20 @@ class MainViewModel(private val sharedPreferences: SharedPreferences) : ViewMode
         lists.add(list)
         onListAdded.invoke()
     }
+
+    fun updateList(list: TaskList) {
+//        TODO("Not yet implemented")
+        sharedPreferences.edit().putStringSet(list.name, list.tasks.toHashSet()).apply()
+        lists.add(list)
+        onListAdded.invoke()
+    }
+
+    fun refreshLists() {
+//        TODO("Not yet implemented")
+        lists.clear()
+        lists.addAll(retrieveLists())
+    }
+
+
+
 }
