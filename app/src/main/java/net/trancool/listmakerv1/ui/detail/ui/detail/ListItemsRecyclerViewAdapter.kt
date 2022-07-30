@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import net.trancool.listmakerv1.databinding.ListItemViewHolderBinding
 import net.trancool.listmakerv1.models.TaskList
 
-class ListItemsRecyclerViewAdapter(var list: TaskList):
+class ListItemsRecyclerViewAdapter(private var list: TaskList):
 RecyclerView.Adapter<ListItemViewHolder>()
 {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListItemViewHolder {
