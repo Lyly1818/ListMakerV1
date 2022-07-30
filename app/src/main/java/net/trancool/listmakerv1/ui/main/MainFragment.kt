@@ -18,18 +18,19 @@ import net.trancool.listmakerv1.models.TaskList
 import kotlin.properties.Delegates
 
 class MainFragment(
-    private val clickListener: MainFragmentInteractionListener) : Fragment(),
+    ) : Fragment(),
     ListSelectionRecyclerViewAdapter.ListSelectionRecyclerViewClickListener{
-
-
     interface MainFragmentInteractionListener {
         fun listItemTapped(list: TaskList)
     }
+    lateinit var clickListener: MainFragmentInteractionListener
+
+
 
     private lateinit var binding: FragmentMainBinding
 
     companion object {
-        fun newInstance(clickListener: MainFragmentInteractionListener) = MainFragment(clickListener)
+        fun newInstance() = MainFragment()
     }
 
     private lateinit var viewModel: MainViewModel
@@ -54,7 +55,7 @@ class MainFragment(
         binding.listsRecyclerview.adapter = recyclerViewAdapter
 
         viewModel.onListAdded = {
-            recyclerViewAdapter.listsUpdated()
+            recyclerViewAdapter.tasksUpdated()
         }
     }
 

@@ -15,7 +15,6 @@ class TaskList(val name: String, val tasks : ArrayList<String> = ArrayList()): P
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(name)
         dest.writeStringList(tasks)
-
     }
 
 

@@ -25,4 +25,7 @@ RecyclerView.Adapter<ListItemViewHolder>()
 //        TODO("Not yet implemented")
         return list.tasks.size
     }
+    fun tasksUpdated() {
+        notifyItemInserted(list.tasks.size - 1)
+    }
 }

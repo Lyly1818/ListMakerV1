@@ -3,48 +3,86 @@ package net.trancool.listmakerv1
 import MainViewModel
 import android.app.Activity
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
+import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import net.trancool.listmakerv1.databinding.ActivityMainBinding
 import net.trancool.listmakerv1.models.TaskList
 import net.trancool.listmakerv1.ui.detail.ListDetailActivity
-import net.trancool.listmakerv1.ui.main.ListSelectionRecyclerViewAdapter
+import net.trancool.listmakerv1.ui.detail.ui.detail.ListDetailFragment
 import net.trancool.listmakerv1.ui.main.MainFragment
 import net.trancool.listmakerv1.ui.main.MainViewModelFactory
 
 class MainActivity : AppCompatActivity(), MainFragment.MainFragmentInteractionListener {
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding:ActivityMainBinding
 
     private lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewModel = ViewModelProvider(this,
-            MainViewModelFactory(PreferenceManager.getDefaultSharedPreferences(this)))
-            .get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(
+            this,
+            MainViewModelFactory(PreferenceManager.getDefaultSharedPreferences(this))
+        ).get(MainViewModel::class.java)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        Log.i("MainActivity", viewModel.toString())
+//        Log.i("net.trancool.listmakerv1.MainActivity", viewModel.toString())
 
         if (savedInstanceState == null) {
-           val mainFragment = MainFragment.newInstance(this)
-                   supportFragmentManager.beginTransaction()
-                .replace(R.id.container, mainFragment)
-                .commitNow()
+            val mainFragment = MainFragment.newInstance()
+            mainFragment.clickListener = this
+
+            val fragmentContainerViewId: Int = if (binding.mainFragmentContainer == null) {
+                R.id.detail_container // source of  error
+            } else {
+                R.id.main_fragment_container
+            }
+
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                add(fragmentContainerViewId, mainFragment)
+            }
         }
 
         binding.fabButton.setOnClickListener {
             showCreateListDialog()
+        }
+    }
+
+    override fun onBackPressed() {
+
+        // 1
+        val listDetailFragment =
+            supportFragmentManager.findFragmentById(R.id.list_detail_fragment_container)
+
+        // 2
+        if (listDetailFragment == null) {
+            super.onBackPressed()
+        } else {
+            // 3
+            title = resources.getString(R.string.app_name)
+
+            // 4
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                remove(listDetailFragment)
+            }
+
+            // 5
+            binding.fabButton.setOnClickListener {
+                showCreateListDialog()
+            }
         }
     }
 
@@ -61,55 +99,69 @@ class MainActivity : AppCompatActivity(), MainFragment.MainFragmentInteractionLi
         builder.setView(listTitleEditText)
         builder.setPositiveButton(positiveButtonTitle) { dialog, _ ->
             dialog.dismiss()
+
             val taskList = TaskList(listTitleEditText.text.toString())
             viewModel.saveList(taskList)
             showListDetail(taskList)
-
         }
-
 
         builder.create().show()
     }
 
-    @Deprecated("Deprecated in Java")
+    private fun showCreateTaskDialog() {
+        val taskEditText = EditText(this)
+        taskEditText.inputType = InputType.TYPE_CLASS_TEXT
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.task_to_add)
+            .setView(taskEditText)
+            .setPositiveButton(R.string.add_task) { dialog, _ ->
+                val task = taskEditText.text.toString()
+                viewModel.addTask(task)
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    private fun showListDetail(list: TaskList) {
+
+        if (binding.mainFragmentContainer == null) {
+            val listDetailIntent = Intent(this, ListDetailActivity::class.java)
+            listDetailIntent.putExtra(INTENT_LIST_KEY, list)
+            startActivityForResult(listDetailIntent, LIST_DETAIL_REQUEST_CODE)
+        } else {
+            val bundle = bundleOf(INTENT_LIST_KEY to list)
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                replace(R.id.list_detail_fragment_container, ListDetailFragment::class.java, bundle)
+            }
+
+            binding.fabButton.setOnClickListener {
+                showCreateTaskDialog()
+            }
+        }
+    }
+
+    override fun listItemTapped(list: TaskList) {
+        showListDetail(list)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         // 1
-        if (requestCode == LIST_DETAIL_REQUEST_CODE && resultCode ==
-            Activity.RESULT_OK) {
-// 2
+        if (requestCode == LIST_DETAIL_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            // 2
             data?.let {
                 // 3
-               viewModel.updateList(data.getParcelableExtra(INTENT_LIST_KEY)!!)
+                viewModel.updateList(data.getParcelableExtra(INTENT_LIST_KEY)!!)
                 viewModel.refreshLists()
             }
-        } }
-
-//    private fun updateLists() {
-//        val lists = listDataManager.readLists()
-//        listsRecyclerView.adapter =
-//            ListSelectionRecyclerViewAdapter(lists, this)
-//    }
-
-//    Creating an intent
-    private fun showListDetail(list: TaskList){
-//    Create an Intent Object using MainActivity context(this), and the class name of the activity we want to move to
-        val listDetailIntent = Intent(this, ListDetailActivity::class.java)
-//    provide Extras as keys with associated values you can provide to Intents
-        listDetailIntent.putExtra(INTENT_LIST_KEY, list)// pass key and data  to the intent
-        startActivityForResult(listDetailIntent, LIST_DETAIL_REQUEST_CODE)// start the targeted activity
+        }
     }
 
     companion object {
         const val INTENT_LIST_KEY = "list"
         const val LIST_DETAIL_REQUEST_CODE = 123
     }
-
-
-    override fun listItemTapped(list: TaskList) {
-//        TODO("Not yet implemented")
-        showListDetail(list)
-    }
-
-
 }

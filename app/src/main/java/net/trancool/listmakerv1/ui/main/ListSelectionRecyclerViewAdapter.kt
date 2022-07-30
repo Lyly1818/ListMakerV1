@@ -35,7 +35,7 @@ class ListSelectionRecyclerViewAdapter(
         return lists.size
     }
 
-    fun listsUpdated() {
+    fun tasksUpdated() {
         notifyItemInserted(lists.size-1)
     }
 }
